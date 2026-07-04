@@ -16,19 +16,14 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
-const { generate } = require('./data/generate');
+const { loadData } = require('./data/sources');
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '0.0.0.0';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// Build the dataset once at boot (deterministic).
-const DB = generate();
-console.log(
-  `[kalodata-local] dataset ready — ${DB.products.length} products, ` +
-    `${DB.creators.length} creators, ${DB.videos.length} videos, ` +
-    `${DB.livestreams.length} livestreams, ${DB.shops.length} shops`
-);
+// Dataset is loaded from the configured source at boot (see data/sources).
+let DB = null;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -188,6 +183,7 @@ const server = http.createServer((req, res) => {
   const q = Object.fromEntries(parsed.searchParams.entries());
 
   if (pathname.startsWith('/api/')) {
+    if (!DB) return sendJson(res, { error: 'Dataset still loading' }, 503);
     try {
       return handleApi(req, res, pathname, q);
     } catch (err) {
@@ -197,6 +193,20 @@ const server = http.createServer((req, res) => {
   return serveStatic(req, res, pathname);
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`\n  ▶ Kalodata-local running at  http://localhost:${PORT}\n`);
-});
+(async function boot() {
+  const source = process.env.DATA_SOURCE || 'synthetic';
+  try {
+    DB = await loadData();
+  } catch (err) {
+    console.error(`[kalodata-local] failed to load data source "${source}":`, err.message);
+    process.exit(1);
+  }
+  console.log(
+    `[kalodata-local] data source: ${DB.meta.source} — ${DB.products.length} products, ` +
+      `${DB.creators.length} creators, ${DB.videos.length} videos, ` +
+      `${DB.livestreams.length} livestreams, ${DB.shops.length} shops`
+  );
+  server.listen(PORT, HOST, () => {
+    console.log(`\n  ▶ Kalodata-local running at  http://localhost:${PORT}\n`);
+  });
+})();

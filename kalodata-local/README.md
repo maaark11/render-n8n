@@ -45,13 +45,50 @@ Open **http://localhost:8080**.
 
 ---
 
+## Where does the data come from? (synthetic vs real)
+
+**How the real Kalodata gets its data:** TikTok has **no public API** for
+competitor/market analytics. Kalodata's team **scrapes publicly visible TikTok
+Shop data** (the public "sold" counter on product pages, video views,
+engagement, creator profiles) and then uses **AI models to estimate** GMV, sales
+volume and ad spend. That's why they state the numbers are estimates, not exact
+figures. There are three realistic ways to feed *real* data into a local clone:
+
+| Route | What you get | Cost / requirement | Legality |
+|-------|--------------|--------------------|----------|
+| **TikTok Shop Open API** | **Your own shop only** — products, orders, analytics | Free, but OAuth + Partner Center approval | ✅ Official |
+| **Third-party data API** (Apify, ScrapeCreators, EchoTik…) | Market/competitor data | Paid API key | ⚠️ Provider's terms |
+| **Scrape TikTok yourself** | Public "sold" counts etc. | DIY, fragile | ❌ Against TikTok ToS |
+
+This project ships a **pluggable data-source layer** so the same UI runs on any
+of them. Two sources are implemented today:
+
+```bash
+node server.js                 # DATA_SOURCE=synthetic (default) — fake but realistic
+DATA_SOURCE=file node server.js  # load real CSV/JSON you drop in data/import/
+```
+
+The **file** source is the zero-credential, zero-scraping path: export data from
+anywhere (your TikTok Shop, a provider, a spreadsheet) into `data/import/` and it
+renders in the same dashboard. See [`data/import/README.md`](data/import/README.md)
+for the column format. Adding an automated `tiktok-official` or `provider`
+source is a matter of dropping a `load()` module into `data/sources/` and
+registering it in `data/sources/index.js`.
+
 ## Architecture
 
 ```
 kalodata-local/
 ├── server.js            # Zero-dep Node HTTP server: static files + JSON API
 ├── data/
-│   └── generate.js      # Seeded deterministic synthetic-data generator
+│   ├── taxonomy.js      # Shared categories (name+icon) and regions
+│   ├── derive.js        # Deterministic categories + overview aggregation
+│   ├── generate.js      # Seeded synthetic-data generator
+│   ├── sources/         # Pluggable data sources
+│   │   ├── index.js     #   resolver (DATA_SOURCE env)
+│   │   ├── synthetic.js #   fake data
+│   │   └── file.js      #   real CSV/JSON importer
+│   └── import/          # Drop your real CSV/JSON here (DATA_SOURCE=file)
 ├── public/
 │   ├── index.html       # App shell (sidebar + topbar + drawer)
 │   ├── styles.css       # Dark SaaS theme

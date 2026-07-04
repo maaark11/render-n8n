@@ -9,6 +9,9 @@
  * *shape* of TikTok Shop analytics (GMV, revenue, growth, engagement...).
  */
 
+const { CATEGORIES, REGIONS, catIcon } = require('./taxonomy');
+const { finalize } = require('./derive');
+
 // --- Seeded PRNG (mulberry32) -------------------------------------------------
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -51,26 +54,6 @@ function growthFrom(series) {
 }
 
 // --- Vocabulary ---------------------------------------------------------------
-const CATEGORIES = [
-  { name: 'Beauty & Personal Care', icon: '💄' },
-  { name: 'Womenswear & Underwear', icon: '👗' },
-  { name: 'Menswear & Underwear', icon: '👕' },
-  { name: 'Phones & Electronics', icon: '📱' },
-  { name: 'Home Supplies', icon: '🏠' },
-  { name: 'Kitchenware', icon: '🍳' },
-  { name: 'Health', icon: '💊' },
-  { name: 'Sports & Outdoor', icon: '⚽' },
-  { name: 'Toys & Hobbies', icon: '🧸' },
-  { name: 'Shoes', icon: '👟' },
-  { name: 'Pet Supplies', icon: '🐾' },
-  { name: 'Baby & Maternity', icon: '🍼' },
-  { name: 'Jewellery & Accessories', icon: '💍' },
-  { name: 'Food & Beverages', icon: '🍫' },
-  { name: 'Automotive', icon: '🚗' },
-];
-
-const REGIONS = ['US', 'UK', 'ID', 'MY', 'TH', 'VN', 'PH', 'BR'];
-
 const PRODUCT_ADJ = [
   'Portable', 'Wireless', 'Rechargeable', 'Mini', 'Pro', 'Smart', 'Premium',
   'Foldable', 'Ultra', 'Compact', 'Magnetic', 'LED', 'Adjustable', 'Waterproof',
@@ -108,9 +91,6 @@ const VIDEO_HOOKS = [
   'Rating trending products',
 ];
 
-// --- Emojis for placeholder thumbnails ---------------------------------------
-const catIconByName = Object.fromEntries(CATEGORIES.map((c) => [c.name, c.icon]));
-
 // --- Generators ---------------------------------------------------------------
 function makeProducts(n) {
   const items = [];
@@ -125,7 +105,7 @@ function makeProducts(n) {
     items.push({
       id: `P${String(i + 1).padStart(4, '0')}`,
       name,
-      icon: catIconByName[category],
+      icon: catIcon(category),
       category,
       region: pick(REGIONS),
       price,
@@ -264,81 +244,6 @@ function makeShops(n, products) {
   return items;
 }
 
-function aggregateCategories(products, creators) {
-  return CATEGORIES.map((c, idx) => {
-    const catProducts = products.filter((p) => p.category === c.name);
-    const catCreators = creators.filter((cr) => cr.category === c.name);
-    const gmv = catProducts.reduce((s, p) => s + p.revenue, 0);
-    const avgGrowth =
-      catProducts.reduce((s, p) => s + p.growth, 0) /
-      Math.max(1, catProducts.length);
-    const series = trendSeries(gmv, 14, 0.15, avgGrowth / 200);
-    return {
-      id: `CAT${idx + 1}`,
-      name: c.name,
-      icon: c.icon,
-      gmv,
-      gmvSeries: series,
-      growth: Number(avgGrowth.toFixed(1)),
-      products: catProducts.length,
-      creators: catCreators.length,
-      avgPrice: Number(
-        (
-          catProducts.reduce((s, p) => s + p.price, 0) /
-          Math.max(1, catProducts.length)
-        ).toFixed(2)
-      ),
-    };
-  });
-}
-
-function buildOverview(db) {
-  const totalGmv = db.products.reduce((s, p) => s + p.revenue, 0);
-  const totalCreators = db.creators.length;
-  const totalVideos = db.videos.length;
-  const totalShops = db.shops.length;
-
-  // 14-day platform GMV trend = sum of product series
-  const days = 14;
-  const gmvTrend = new Array(days).fill(0);
-  for (const p of db.products) {
-    for (let i = 0; i < days; i++) gmvTrend[i] += p.revenueSeries[i] || 0;
-  }
-
-  const topProducts = [...db.products]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
-  const topMovers = [...db.products]
-    .sort((a, b) => b.growth - a.growth)
-    .slice(0, 5);
-  const topCreators = [...db.creators]
-    .sort((a, b) => b.gmv - a.gmv)
-    .slice(0, 5);
-  const categoryBreakdown = [...db.categories]
-    .sort((a, b) => b.gmv - a.gmv)
-    .map((c) => ({ name: c.name, icon: c.icon, gmv: c.gmv, growth: c.growth }));
-
-  return {
-    kpis: {
-      totalGmv,
-      totalProducts: db.products.length,
-      totalCreators,
-      totalVideos,
-      totalShops,
-      avgGrowth: Number(
-        (
-          db.products.reduce((s, p) => s + p.growth, 0) / db.products.length
-        ).toFixed(1)
-      ),
-    },
-    gmvTrend,
-    topProducts,
-    topMovers,
-    topCreators,
-    categoryBreakdown,
-  };
-}
-
 // --- Assemble -----------------------------------------------------------------
 function generate() {
   const products = makeProducts(140);
@@ -346,17 +251,13 @@ function generate() {
   const videos = makeVideos(180, creators, products);
   const livestreams = makeLivestreams(60, creators, products);
   const shops = makeShops(55, products);
-  const categories = aggregateCategories(products, creators);
 
-  const db = { products, creators, videos, livestreams, shops, categories };
-  db.overview = buildOverview(db);
-  db.meta = {
+  const db = { products, creators, videos, livestreams, shops };
+  return finalize(db, {
     seed: SEED,
+    source: 'synthetic',
     generatedFor: 'local demo — synthetic data, not affiliated with Kalodata',
-    regions: REGIONS,
-    categories: CATEGORIES.map((c) => c.name),
-  };
-  return db;
+  });
 }
 
 module.exports = { generate, CATEGORIES, REGIONS };
