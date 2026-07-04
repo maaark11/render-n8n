@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalo Local · TikTok Shop Analytics (Demo)</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Login view -->
+  <div id="login" class="login-wrap">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-mark">◈</span>
+        <span class="brand-name">Kalo<span>Local</span></span>
+      </div>
+      <p class="login-sub">TikTok Shop analytics — local demo with synthetic data</p>
+      <form id="login-form">
+        <label>Email
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </label>
+        <label>Password
+          <input type="password" id="password" placeholder="••••••••" required />
+        </label>
+        <button type="submit" class="btn-primary">Sign in</button>
+        <button type="button" id="demo-btn" class="btn-ghost">Use demo account</button>
+      </form>
+      <p class="login-note">No real account needed. Any email works — this is a local sandbox.</p>
+    </div>
+  </div>
+
+  <!-- App shell -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand small">
+        <span class="brand-mark">◈</span>
+        <span class="brand-name">Kalo<span>Local</span></span>
+      </div>
+      <nav id="nav">
+        <a data-view="overview" class="nav-item active">📊 Overview</a>
+        <a data-view="products" class="nav-item">📦 Products</a>
+        <a data-view="creators" class="nav-item">🎤 Creators</a>
+        <a data-view="videos" class="nav-item">🎬 Videos</a>
+        <a data-view="livestreams" class="nav-item">🔴 Livestreams</a>
+        <a data-view="shops" class="nav-item">🏬 Shops</a>
+      </nav>
+      <div class="sidebar-foot">
+        <div id="user-chip" class="user-chip"></div>
+        <a id="logout" class="nav-item muted">↩ Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div id="view-title" class="view-title">Overview</div>
+        <div class="filters">
+          <select id="f-category" class="filter"></select>
+          <select id="f-region" class="filter"></select>
+          <input id="f-search" class="filter search" type="search" placeholder="Search…" />
+        </div>
+      </header>
+      <section id="view" class="view"></section>
+    </main>
+  </div>
+
+  <!-- Drilldown drawer -->
+  <div id="drawer" class="drawer hidden">
+    <div class="drawer-panel">
+      <button id="drawer-close" class="drawer-close">✕</button>
+      <div id="drawer-body"></div>
+    </div>
+    <div id="drawer-scrim" class="drawer-scrim"></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

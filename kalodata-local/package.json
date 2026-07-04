@@ -1,0 +1,15 @@
+{
+  "name": "kalo-local",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local, synthetic TikTok Shop analytics dashboard — an original reconstruction of the Kalodata concept for offline experimentation. No external dependencies, no scraping, no real data.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT"
+}
