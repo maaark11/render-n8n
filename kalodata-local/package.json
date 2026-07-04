@@ -1,0 +1,15 @@
+{
+  "name": "kalodata-local",
+  "version": "1.0.0",
+  "description": "Local, self-contained TikTok Shop analytics dashboard inspired by kalodata.com. Synthetic data, zero runtime dependencies.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT",
+  "private": true
+}

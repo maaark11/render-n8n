@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalodata Local · TikTok Shop Analytics (demo)</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">K</span>
+          <div class="brand-text">
+            <strong>Kalodata</strong><span class="brand-sub">local</span>
+          </div>
+        </div>
+        <nav class="nav" id="nav">
+          <button class="nav-item" data-view="explore">
+            <span class="nav-ico">🧭</span> Explore
+          </button>
+          <button class="nav-item" data-view="category">
+            <span class="nav-ico">🗂️</span> Category
+          </button>
+          <button class="nav-item" data-view="product">
+            <span class="nav-ico">📦</span> Product
+          </button>
+          <button class="nav-item" data-view="creator">
+            <span class="nav-ico">🧑‍🎤</span> Creator
+          </button>
+          <button class="nav-item" data-view="video">
+            <span class="nav-ico">🎬</span> Video
+          </button>
+          <button class="nav-item" data-view="livestream">
+            <span class="nav-ico">📡</span> Livestream
+          </button>
+          <button class="nav-item" data-view="shop">
+            <span class="nav-ico">🏬</span> Shop
+          </button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="badge-demo">Synthetic data · seed <span id="seed">—</span></div>
+          <div class="sidebar-note">
+            Local demo inspired by kalodata.com. Not affiliated. No real TikTok
+            data.
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-title">
+            <h1 id="view-title">Explore</h1>
+            <p id="view-sub" class="muted"></p>
+          </div>
+          <div class="topbar-right">
+            <div class="region-pill">
+              <span>🌐</span>
+              <select id="region-global">
+                <option value="all">All regions</option>
+              </select>
+            </div>
+            <div class="date-pill" id="date-pill">
+              <button data-range="7" class="active">7D</button>
+              <button data-range="30">30D</button>
+              <button data-range="90">90D</button>
+            </div>
+          </div>
+        </header>
+
+        <section class="content" id="content">
+          <!-- rendered by app.js -->
+          <div class="loading">Loading…</div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Detail drawer -->
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+    <aside class="drawer" id="drawer" hidden>
+      <button class="drawer-close" id="drawer-close">✕</button>
+      <div id="drawer-body"></div>
+    </aside>
+
+    <script src="/charts.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
