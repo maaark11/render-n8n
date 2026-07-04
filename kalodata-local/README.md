@@ -61,19 +61,59 @@ figures. There are three realistic ways to feed *real* data into a local clone:
 | **Scrape TikTok yourself** | Public "sold" counts etc. | DIY, fragile | ❌ Against TikTok ToS |
 
 This project ships a **pluggable data-source layer** so the same UI runs on any
-of them. Two sources are implemented today:
+of them. Three sources are implemented:
 
 ```bash
-node server.js                 # DATA_SOURCE=synthetic (default) — fake but realistic
-DATA_SOURCE=file node server.js  # load real CSV/JSON you drop in data/import/
+node server.js                                   # synthetic (default) — fake but realistic
+DATA_SOURCE=file node server.js                  # real CSV/JSON from data/import/
+DATA_SOURCE=provider PROVIDER=mock node server.js  # third-party pipeline, canned demo (no key)
 ```
+
+### Third-party provider (real market data)
+
+This is the closest architecture to Kalodata. A provider does the
+scraping/aggregation; we fetch their JSON, estimate revenue as
+`price × sold_count`, and render it. Presets included:
+
+```bash
+# ScrapeCreators (https://scrapecreators.com) — REST + x-api-key
+DATA_SOURCE=provider PROVIDER=scrapecreators \
+  PROVIDER_API_KEY=sk_xxx \
+  PROVIDER_QUERIES="makeup,skincare,kitchen,fitness,supplements" \
+  node server.js
+
+# Apify (https://apify.com) — actor dataset
+DATA_SOURCE=provider PROVIDER=apify \
+  PROVIDER_API_KEY=apify_api_xxx \
+  APIFY_ACTOR=excavator~tiktok-shop-scraper \
+  node server.js
+
+# Generic — any REST API, wired entirely through env vars
+DATA_SOURCE=provider PROVIDER=generic \
+  PROVIDER_API_KEY=xxx \
+  PROVIDER_PRODUCTS_URL="https://api.example.com/tiktok/products?limit=200" \
+  PROVIDER_ROOT="data" \
+  PROVIDER_MAP='{"name":"title","units":"sold_count"}' \
+  node server.js
+```
+
+Run `PROVIDER=mock` first to see the full fetch → map → derive → render pipeline
+with **no API key**. Add a new provider by dropping a preset into
+`data/sources/providers/` (each exports `defaultBaseUrl` and
+`async fetch(ctx) → { products, creators, videos, livestreams, shops }`).
+
+**Building trends from snapshots.** A single provider call is a snapshot, so
+`growth` starts at 0. This is exactly how Kalodata derives momentum: run the
+provider on a schedule and diff the `sold_count` over time. Persist each run's
+output as `data/import/products.json` and the `file`/`derive` layer will chart
+the history.
+
+### File import (zero credential)
 
 The **file** source is the zero-credential, zero-scraping path: export data from
 anywhere (your TikTok Shop, a provider, a spreadsheet) into `data/import/` and it
 renders in the same dashboard. See [`data/import/README.md`](data/import/README.md)
-for the column format. Adding an automated `tiktok-official` or `provider`
-source is a matter of dropping a `load()` module into `data/sources/` and
-registering it in `data/sources/index.js`.
+for the column format.
 
 ## Architecture
 
@@ -87,7 +127,9 @@ kalodata-local/
 │   ├── sources/         # Pluggable data sources
 │   │   ├── index.js     #   resolver (DATA_SOURCE env)
 │   │   ├── synthetic.js #   fake data
-│   │   └── file.js      #   real CSV/JSON importer
+│   │   ├── file.js      #   real CSV/JSON importer
+│   │   ├── provider.js  #   third-party API fetch + map
+│   │   └── providers/   #   presets: mock, scrapecreators, apify, generic
 │   └── import/          # Drop your real CSV/JSON here (DATA_SOURCE=file)
 ├── public/
 │   ├── index.html       # App shell (sidebar + topbar + drawer)

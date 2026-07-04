@@ -5,15 +5,13 @@
  *
  *   DATA_SOURCE=synthetic   (default) deterministic fake data
  *   DATA_SOURCE=file        load real CSV/JSON from ./data/import/
- *
- * Future adapters (see README "Real data") slot in here the same way:
- *   - tiktok-official : TikTok Shop Open API (your own shop, OAuth)
- *   - provider        : a third-party data API (bring your own key)
+ *   DATA_SOURCE=provider    pull from a third-party data API (see PROVIDER=…)
  */
 
 const SOURCES = {
   synthetic: () => require('./synthetic'),
   file: () => require('./file'),
+  provider: () => require('./provider'),
 };
 
 async function loadData() {
